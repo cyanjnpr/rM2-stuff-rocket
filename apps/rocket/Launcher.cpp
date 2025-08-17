@@ -18,9 +18,31 @@ LauncherState
 LauncherWidget::createState() {
   return LauncherState{};
 }
+
 void
 LauncherState::init(rmlib::AppContext& context,
                     const rmlib::BuildContext& /*unused*/) {
+  attempts = 0;
+  xochitlPasscode = "";
+
+  std::string pathStr = "/home/root/.config/remarkable/xochitl.conf";
+  unistdpp::Result<std::string> result = unistdpp::readFile(std::filesystem::path(pathStr));
+  if (result.has_value()) {
+    std::istringstream stream(result.value());
+    std::string line;
+    std::string prefix = "Passcode";
+
+    while (std::getline(stream, line)) {
+        if (line.compare(0, prefix.size(), prefix) == 0) {
+          size_t pos = line.find('=');
+          if (pos != std::string::npos && pos + 1 < line.size()) {
+            xochitlPasscode = line.substr(pos + 1); 
+            break;
+          }
+        }
+    }
+  }
+
   if (auto* key = context.getInputManager().getBaseDevices().key;
       key != nullptr) {
     key->grab();
@@ -52,6 +74,7 @@ LauncherState::init(rmlib::AppContext& context,
 
 bool
 LauncherState::sleep() {
+  isPasscodeGood = false;
   system("/sbin/rmmod brcmfmac");
   int res = system("echo \"mem\" > /sys/power/state");
   system("/sbin/modprobe brcmfmac");
@@ -72,6 +95,7 @@ LauncherState::sleep() {
 
   return false;
 }
+
 void
 LauncherState::stopTimer() {
   sleepTimer.disable();
@@ -98,7 +122,8 @@ LauncherState::tick() const {
         // current app.
         self.resetInactivity();
         self.sleepTimer.disable();
-        self.hide(nullptr);
+        self.show();
+        // self.hide(nullptr);
       } else {
         // Retry sleeping if failed or something else woke us.
         self.sleepCountdown = retry_sleep_timeout;
@@ -110,6 +135,9 @@ LauncherState::tick() const {
 void
 LauncherState::toggle(rmlib::AppContext& context) {
   if (visible) {
+    if (!isPasscodeGood) {
+      return;
+    }
     bool shouldStartTimer = sleepCountdown <= 0;
     stopTimer();
     hide(shouldStartTimer ? &context : nullptr);
@@ -138,12 +166,35 @@ LauncherState::hide(rmlib::AppContext* context) {
   if (!visible) {
     return;
   }
-
-  if (auto* current = getCurrentApp(); current != nullptr) {
+  if (auto* current = getPreviousApp(); current != nullptr) {
+    switchApp(*current);
+  } else if (auto* current = getCurrentApp(); current != nullptr) {
     switchApp(*current);
   } else if (context != nullptr) {
     startTimer(*context, 0);
   }
+}
+
+App*
+LauncherState::getPreviousApp() {
+  auto app = std::find_if(apps.begin(), apps.end(), [this](auto& app) {
+    if (previousAppPath.size() == 0) {
+      return false;
+    }
+    return app.description().path == previousAppPath;
+  });
+
+  if (app == apps.end()) {
+    return nullptr;
+  }
+
+  return &*app;
+}
+
+const App*
+LauncherState::getPreviousApp() const {
+  // NOLINTNEXTLINE
+  return const_cast<LauncherState*>(this)->getPreviousApp();
 }
 
 App*
@@ -192,6 +243,7 @@ LauncherState::switchApp(App& app) {
     }
   }
 
+  previousAppPath = currentAppPath;
   currentAppPath = app.description().path;
 }
 
@@ -205,6 +257,10 @@ LauncherState::updateStoppedApps() {
     currentAppPath = "";
     shouldShow = true;
   }
+  if (const auto* current = getPreviousApp();
+      current != nullptr && !current->isRunning()) {
+    previousAppPath = "";
+  }
 
   apps.erase(std::remove_if(apps.begin(),
                             apps.end(),
@@ -217,6 +273,14 @@ LauncherState::updateStoppedApps() {
   if (shouldShow) {
     show();
   }
+}
+
+
+void LauncherState::typePasscode(char rune) {
+  if (passcode.size() >= 8) {
+    return;
+  }
+  passcode += rune;
 }
 
 void

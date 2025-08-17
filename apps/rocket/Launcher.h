@@ -51,8 +51,8 @@ public:
     }();
 
     return Center(Padding(
-      Column(Padding(Text(text, 2 * default_text_size), Insets::all(10)),
-             button),
+      Column(Padding(Text(text, 2 * default_text_size), Insets::all(10))),
+           // button),
       Insets::all(50)));
   }
 
@@ -75,7 +75,9 @@ public:
               self.stopTimer();
             });
           },
-          app.description().path == currentAppPath);
+          previousAppPath.size() > 0 ? 
+            app.description().path == previousAppPath : 
+            app.description().path == currentAppPath);
       }
     }
     return Wrap(widgets);
@@ -102,6 +104,70 @@ public:
     return Cleared(Column(header(context), runningApps(), appList()));
   }
 
+  auto lockscreen(rmlib::AppContext& context) const {
+    using namespace rmlib;
+
+    std::string passcodeCopy = passcode;
+    std::fill(passcodeCopy.begin(), passcodeCopy.end(), '*');
+
+    auto unlockText = Text("Enter passcode:", 2 * default_text_size);
+    auto passcodeText = Text(passcodeCopy, (int)(2.5 * default_text_size));
+
+    auto b1 = Button(
+      "1", [this] { setState([](auto& self) { self.typePasscode('1'); }); }, 
+      default_text_size * 2, 20);
+    auto b2 = Button(
+      "2", [this] { setState([](auto& self) { self.typePasscode('2'); }); }, 
+      default_text_size * 2, 20);
+    auto b3 = Button(
+      "3", [this] { setState([](auto& self) { self.typePasscode('3');}); }, 
+      default_text_size * 2, 20);
+    auto b4 = Button(
+      "4", [this] { setState([](auto& self) { self.typePasscode('4'); }); }, 
+      default_text_size * 2, 20);
+    auto b5 = Button(
+      "5", [this] { setState([](auto& self) { self.typePasscode('5'); }); }, 
+      default_text_size * 2, 20);
+    auto b6 = Button(
+      "6", [this] { setState([](auto& self) { self.typePasscode('6'); }); }, 
+      default_text_size * 2, 20);
+    auto b7 = Button(
+      "7", [this] { setState([](auto& self) { self.typePasscode('7'); }); }, 
+      default_text_size * 2, 20);
+    auto b8 = Button(
+      "8", [this] { setState([](auto& self) { self.typePasscode('8'); }); }, 
+      default_text_size * 2, 20);
+    auto b9 = Button(
+      "9", [this] { setState([](auto& self) { self.typePasscode('9'); }); }, 
+      default_text_size * 2, 20);
+    auto b0 = Button(
+      "0", [this] { setState([](auto& self) { self.typePasscode('0'); }); }, 
+      default_text_size * 2, 20);
+    auto bClear = Button(
+      "C", [this] { setState([](auto& self) { self.passcode = ""; }); }, 
+      default_text_size * 2, 20);
+    auto bEnter = Button(
+      ">", [this] { setState([](auto& self) { 
+        self.isPasscodeGood = self.passcode == self.xochitlPasscode;
+        self.attempts++;
+        self.passcode = "";
+        if (self.isPasscodeGood) {
+          self.attempts = 0;
+        } else if (self.attempts >= 5) {
+          system("/sbin/poweroff");
+        }
+       }); }, default_text_size * 2, 20);
+
+    return Cleared(Column(
+      Padding(unlockText, Insets::all(50)),
+      Padding(passcodeText, Insets::all(100)), 
+      Row(Padding(b1, Insets::all(30)), Padding(b2, Insets::all(30)), Padding(b3, Insets::all(30))),
+      Row(Padding(b4, Insets::all(30)), Padding(b5, Insets::all(30)), Padding(b6, Insets::all(30))),
+      Row(Padding(b7, Insets::all(30)), Padding(b8, Insets::all(30)), Padding(b9, Insets::all(30))),
+      Row(Padding(bClear, Insets::all(30)), Padding(b0, Insets::all(30)), Padding(bEnter, Insets::all(30)))
+    ));
+  }
+
   auto build(rmlib::AppContext& context,
              const rmlib::BuildContext& /*unused*/) const {
     using namespace rmlib;
@@ -119,7 +185,21 @@ public:
 
     auto ui = [&]() -> DynamicWidget {
       if (visible) {
-        return launcher(context);
+        if (sleepCountdown == 0) {
+          // SEGFAULTS based on image parameters unknown to me
+          // possibly color profile
+          // xkcd comics work fine so do draft icons
+          // auto img = ImageCanvas::load("/home/root/wallpapers/suspended.png");
+          // if (img.has_value()) {
+          //   const Canvas& canvas = img->canvas;
+          //   return Center(Sized(Image(canvas), 1404, 1872));
+          // }
+          return Center(Text("Zzz...", 2 * default_text_size));
+        }
+        if (isPasscodeGood || xochitlPasscode.size() == 0) {
+          return launcher(context);
+        }
+        return lockscreen(context);
       }
 
       if (background == nullptr) {
@@ -145,7 +225,7 @@ public:
   }
 
 private:
-  static bool sleep();
+  bool sleep();
 
   void startTimer(rmlib::AppContext& context, int time = default_sleep_timeout);
   void stopTimer();
@@ -157,8 +237,10 @@ private:
   void toggle(rmlib::AppContext& context);
 
   App* getCurrentApp();
-
   const App* getCurrentApp() const;
+
+  App* getPreviousApp();
+  const App* getPreviousApp() const;
 
   void switchApp(App& app);
 
@@ -168,8 +250,16 @@ private:
 
   void resetInactivity() const;
 
+  void typePasscode(char rune);
+
   std::vector<App> apps;
   std::string currentAppPath;
+  std::string previousAppPath;
+
+  std::string passcode;
+  std::string xochitlPasscode;
+  bool isPasscodeGood;
+  int attempts;
 
   std::optional<rmlib::MemoryCanvas> backupBuffer;
 

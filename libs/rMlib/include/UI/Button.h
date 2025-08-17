@@ -9,8 +9,8 @@ class Button : public StatefulWidget<Button> {
   class State : public StateBase<Button> {
   public:
     auto build(AppContext& ctx, const BuildContext& buildCtx) const {
-      return GestureDetector(Padding(Border(Border(Text(getWidget().text),
-                                                   Insets::all(2),
+      return GestureDetector(Padding(Border(Border(Text(getWidget().text, getWidget().fontSize),
+                                                   Insets::all(getWidget().internalPadding),
                                                    down ? black : white),
                                             Insets::all(2)),
                                      Insets::all(2)),
@@ -30,14 +30,16 @@ class Button : public StatefulWidget<Button> {
   };
 
 public:
-  Button(std::string text, Callback onClick)
-    : text(std::move(text)), onClick(std::move(onClick)) {}
+  Button(std::string text, Callback onClick, int fontSize = default_text_size, int internalPadding = 5)
+    : text(std::move(text)), onClick(std::move(onClick)), fontSize(fontSize), internalPadding(internalPadding) {}
 
   static State createState() { return State{}; }
 
 private:
   std::string text;
   Callback onClick;
+  int fontSize;
+  int internalPadding;
 };
 
 } // namespace rmlib

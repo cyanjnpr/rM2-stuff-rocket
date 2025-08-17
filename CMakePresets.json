@@ -70,7 +70,9 @@
       "name": "dev",
       "inherits": ["base", "rm", "debug-base"],
       "cacheVariables": {
-        "BUILD_TESTS": false
+        "BUILD_TESTS": false,
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": true
       }
     },
     {
