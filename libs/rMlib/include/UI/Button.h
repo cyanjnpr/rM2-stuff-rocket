@@ -9,9 +9,10 @@ class Button : public StatefulWidget<Button> {
   class State : public StateBase<Button> {
   public:
     auto build(AppContext& ctx, const BuildContext& buildCtx) const {
-      return GestureDetector(Padding(Border(Border(Text(getWidget().text, getWidget().fontSize),
-                                                   Insets::all(getWidget().internalPadding),
-                                                   down ? black : white),
+      return GestureDetector(Padding(CircularBorder(CircularBorder(Padding(Text(getWidget().text, getWidget().fontSize), 
+                                                   Insets::all(getWidget().internalPadding)),
+                                                Insets::all(getWidget().internalPadding),
+                                                down ? black : white),
                                             Insets::all(2)),
                                      Insets::all(2)),
                              Gestures{}

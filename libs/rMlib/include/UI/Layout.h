@@ -2,6 +2,7 @@
 
 #include <UI/RenderObject.h>
 #include <UI/Widget.h>
+#include <cmath>
 
 namespace rmlib {
 template<typename Child>
@@ -103,6 +104,87 @@ public:
 
   Child child;
   Insets insets;
+};
+
+template<typename Child>
+class CircularBorder;
+
+template<typename Child>
+class CircularBorderRenderObject : public SingleChildRenderObject<CircularBorder<Child>> {
+public:
+  using SingleChildRenderObject<CircularBorder<Child>>::SingleChildRenderObject;
+
+  void update(const CircularBorder<Child>& newWidget) {
+    if (this->widget->size != newWidget.size) {
+      this->markNeedsLayout();
+    }
+
+    if (this->widget->color != newWidget.color) {
+      // Only mark ourselves, our child shouldn't be redrawn.
+      // Also use partial draw so our region isn't cleared.
+      RenderObject::markNeedsDraw(/* full */ false);
+    }
+
+    this->widget = &newWidget;
+    this->widget->child.update(*this->child);
+  }
+
+protected:
+  Size doLayout(const Constraints& constraints) override {
+    const auto childConstraints = constraints.inset(this->widget->size);
+    const auto childSize = this->child->layout(childConstraints);
+    const auto newSize = constraints.expand(childSize, this->widget->size);
+
+    if (newSize != this->getSize()) {
+      this->markNeedsDraw();
+    }
+
+    return newSize;
+  }
+
+  UpdateRegion doDraw(rmlib::Rect rect, rmlib::Canvas& canvas) override {
+    auto result = this->child->draw(this->widget->size.shrink(rect), canvas);
+
+    /// Only redraw the border if we're marked for redrawing, ignore our child.
+    if (RenderObject::getNeedsDraw()) {
+      const auto drawCircle = [color = this->widget->color,
+                             &canvas](Point c, int r, int size) {
+        Point last = { c.x + r, c.y };
+        for (int i = 0; i < size; i++, r--) {
+          for (int d = 0; d < 360; d++) {
+            double rd = d * M_PI / 180.0;
+            Point current = { c.x + int(r * cos(rd)), c.y + int(r * sin(rd)) };
+            canvas.drawLine(last, current, color);
+            last = current;
+          }
+        }
+      };
+
+      drawCircle({ rect.topLeft.x + abs(rect.bottomRight.x - rect.topLeft.x) / 2,
+                  rect.topLeft.y + abs(rect.bottomRight.y - rect.topLeft.y) /2 },
+                abs(rect.bottomRight.x - rect.topLeft.x) / 2, this->widget->size.top);
+
+      result |= UpdateRegion{ rect, rmlib::fb::Waveform::DU };
+    }
+
+    return result;
+  }
+};
+
+template<typename Child>
+class CircularBorder : public Widget<CircularBorderRenderObject<Child>> {
+private:
+public:
+  CircularBorder(Child child, Insets size, int color = black)
+    : child(std::move(child)), size(size), color(color) {}
+
+  std::unique_ptr<RenderObject> createRenderObject() const {
+    return std::make_unique<CircularBorderRenderObject<Child>>(*this);
+  }
+
+  Child child;
+  Insets size;
+  int color;
 };
 
 template<typename Child>

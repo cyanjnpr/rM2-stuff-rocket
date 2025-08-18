@@ -111,52 +111,43 @@ public:
     std::fill(passcodeCopy.begin(), passcodeCopy.end(), '*');
 
     auto unlockText = Text("Enter passcode:", 2 * default_text_size);
-    auto passcodeText = Text(passcodeCopy, (int)(2.5 * default_text_size));
+    auto passcodeText = Text(passcodeCopy, (int)(2 * default_text_size));
 
     auto b1 = Button(
       "1", [this] { setState([](auto& self) { self.typePasscode('1'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b2 = Button(
       "2", [this] { setState([](auto& self) { self.typePasscode('2'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b3 = Button(
       "3", [this] { setState([](auto& self) { self.typePasscode('3');}); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b4 = Button(
       "4", [this] { setState([](auto& self) { self.typePasscode('4'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b5 = Button(
       "5", [this] { setState([](auto& self) { self.typePasscode('5'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b6 = Button(
       "6", [this] { setState([](auto& self) { self.typePasscode('6'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b7 = Button(
       "7", [this] { setState([](auto& self) { self.typePasscode('7'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b8 = Button(
       "8", [this] { setState([](auto& self) { self.typePasscode('8'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b9 = Button(
       "9", [this] { setState([](auto& self) { self.typePasscode('9'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto b0 = Button(
       "0", [this] { setState([](auto& self) { self.typePasscode('0'); }); }, 
-      default_text_size * 2, 20);
+      default_text_size * 1.5, 15);
     auto bClear = Button(
-      "C", [this] { setState([](auto& self) { self.passcode = ""; }); }, 
-      default_text_size * 2, 20);
-    auto bEnter = Button(
-      ">", [this] { setState([](auto& self) { 
-        self.isPasscodeGood = self.passcode == self.xochitlPasscode;
-        self.attempts++;
-        self.passcode = "";
-        if (self.isPasscodeGood) {
-          self.attempts = 0;
-        } else if (self.attempts >= 5) {
-          system("/sbin/poweroff");
-        }
-       }); }, default_text_size * 2, 20);
+      "<=", [this] { setState([](auto& self) { if (!self.passcode.empty()) {
+        self.passcode.pop_back();
+      } }); }, 
+      default_text_size * 1.5, 15);
 
     return Cleared(Column(
       Padding(unlockText, Insets::all(50)),
@@ -164,7 +155,7 @@ public:
       Row(Padding(b1, Insets::all(30)), Padding(b2, Insets::all(30)), Padding(b3, Insets::all(30))),
       Row(Padding(b4, Insets::all(30)), Padding(b5, Insets::all(30)), Padding(b6, Insets::all(30))),
       Row(Padding(b7, Insets::all(30)), Padding(b8, Insets::all(30)), Padding(b9, Insets::all(30))),
-      Row(Padding(bClear, Insets::all(30)), Padding(b0, Insets::all(30)), Padding(bEnter, Insets::all(30)))
+      Row(Padding(b0, Insets::all(30)), Padding(bClear, Insets::all(30)))
     ));
   }
 

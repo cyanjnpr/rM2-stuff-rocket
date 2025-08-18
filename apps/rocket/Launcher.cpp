@@ -277,10 +277,17 @@ LauncherState::updateStoppedApps() {
 
 
 void LauncherState::typePasscode(char rune) {
-  if (passcode.size() >= 8) {
-    return;
-  }
   passcode += rune;
+  if (passcode.size() >= xochitlPasscode.size()) {
+    isPasscodeGood = passcode == xochitlPasscode;
+    attempts++;
+    passcode = "";
+    if (isPasscodeGood) {
+      attempts = 0;
+    } else if (attempts >= 5) {
+      system("/sbin/poweroff");
+    }
+  }
 }
 
 void
