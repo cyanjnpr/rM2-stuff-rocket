@@ -34,12 +34,12 @@ More usage information can be found in the yaft [Readme](apps/yaft).
 Launcher that uses the power button to show.
 
 Changes made in this fork:
-    - If set, passcode is copied from xochitl to display additional lockscreen in rocket itself
-        - instead of timeout after multiple failures to authenticate, device is shutdown to maintain security
-    - Launcher keeps focus on the previous app not the current one
-        - this behavior enables switching between two currently used apps by double clicking the power button
-    - App widgets are not visible while device is sleeping
-    - Poweroff & reboot buttons in the launcher menu
+- If set, passcode is copied from xochitl to display additional lockscreen in rocket itself
+    - instead of timeout after multiple failures to authenticate, device is shutdown to maintain security
+- Launcher keeps focus on the previous app not the current one
+    - this behavior enables switching between two currently used apps by double clicking the power button
+- App widgets are not visible while device is sleeping
+- Poweroff & reboot buttons in the launcher menu
 
 <img src="doc/rocket_lockscreen.png" width=500/>
 <img src="doc/rocket.png" width=500/>
