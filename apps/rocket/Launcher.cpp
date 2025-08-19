@@ -7,6 +7,7 @@ using namespace rmlib;
 namespace {
 
 constexpr std::array static_app_paths = { "/opt/etc/draft", "/etc/draft" };
+const std::string xochitl_conf_path = "/home/root/.config/remarkable/xochitl.conf";
 
 #ifndef KEY_POWER
 #define KEY_POWER 116
@@ -25,8 +26,7 @@ LauncherState::init(rmlib::AppContext& context,
   attempts = 0;
   xochitlPasscode = "";
 
-  std::string pathStr = "/home/root/.config/remarkable/xochitl.conf";
-  unistdpp::Result<std::string> result = unistdpp::readFile(std::filesystem::path(pathStr));
+  unistdpp::Result<std::string> result = unistdpp::readFile(std::filesystem::path(xochitl_conf_path));
   if (result.has_value()) {
     std::istringstream stream(result.value());
     std::string line;
@@ -136,6 +136,10 @@ void
 LauncherState::toggle(rmlib::AppContext& context) {
   if (visible) {
     if (!isPasscodeGood) {
+      // something breaks if button is clicked a few times with timer == 0
+      //sh: line 1: echo: write error: Device or resource busy
+      // driver unloading/loading is my guess
+      // startTimer(context, 0);
       return;
     }
     bool shouldStartTimer = sleepCountdown <= 0;

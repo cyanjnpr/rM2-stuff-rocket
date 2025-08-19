@@ -5,6 +5,86 @@
 #include <cmath>
 
 namespace rmlib {
+  
+template<typename Child>
+class Corner;
+
+template<typename Child>
+class CornerRenderObject : public SingleChildRenderObject<Corner<Child>> {
+public:
+  using SingleChildRenderObject<Corner<Child>>::SingleChildRenderObject;
+
+  Size doLayout(const Constraints& constraints) override {
+    childSize = this->child->layout(Constraints{ { 0, 0 }, constraints.max });
+
+    auto result = constraints.max;
+    if (!constraints.hasBoundedWidth()) {
+      result.width = childSize.width;
+    }
+    if (!constraints.hasBoundedHeight()) {
+      result.height = childSize.height;
+    }
+
+    return result;
+  }
+
+  void update(const Corner<Child>& newWidget) {
+    this->widget = &newWidget;
+    this->widget->child.update(*this->child);
+  }
+
+protected:
+  UpdateRegion doDraw(rmlib::Rect rect, rmlib::Canvas& canvas) override {
+    int xOffset;
+    int yOffset;
+    switch(this->widget->cornerVal) {
+      case 0:
+        // top left
+        xOffset = 0;
+        yOffset = 0;
+        break;
+      case 1:
+        // top right
+        xOffset = (rect.width() - childSize.width);
+        yOffset = 0;
+        break;
+      case 2:
+        // bottom right
+        xOffset = (rect.width() - childSize.width);
+        yOffset = (rect.height() - childSize.height);
+        break;
+      case 3:
+      default:
+        // bottom left
+        xOffset = 0;
+        yOffset = (rect.height() - childSize.height);
+    }
+
+    const auto topLeft = rect.topLeft + rmlib::Point{ xOffset, yOffset };
+    const auto bottomRight = topLeft + childSize.toPoint();
+    return this->child->draw(rmlib::Rect{ topLeft, bottomRight }, canvas);
+
+  }
+
+private:
+  Size childSize;
+};
+
+template<typename Child>
+class Corner : public Widget<CornerRenderObject<Child>> {
+private:
+public:
+  Corner(Child child, int cornerVal) : 
+    child(std::move(child)), cornerVal(cornerVal) {}
+
+  std::unique_ptr<RenderObject> createRenderObject() const {
+    return std::make_unique<CornerRenderObject<Child>>(*this);
+  }
+
+  Child child;
+  int cornerVal;
+};
+
 template<typename Child>
 class Center;
 
@@ -107,14 +187,14 @@ public:
 };
 
 template<typename Child>
-class CircularBorder;
+class RoundBorder;
 
 template<typename Child>
-class CircularBorderRenderObject : public SingleChildRenderObject<CircularBorder<Child>> {
+class RoundBorderRenderObject : public SingleChildRenderObject<RoundBorder<Child>> {
 public:
-  using SingleChildRenderObject<CircularBorder<Child>>::SingleChildRenderObject;
+  using SingleChildRenderObject<RoundBorder<Child>>::SingleChildRenderObject;
 
-  void update(const CircularBorder<Child>& newWidget) {
+  void update(const RoundBorder<Child>& newWidget) {
     if (this->widget->size != newWidget.size) {
       this->markNeedsLayout();
     }
@@ -161,7 +241,7 @@ protected:
       };
 
       drawCircle({ rect.topLeft.x + abs(rect.bottomRight.x - rect.topLeft.x) / 2,
-                  rect.topLeft.y + abs(rect.bottomRight.y - rect.topLeft.y) /2 },
+                  rect.topLeft.y + abs(rect.bottomRight.y - rect.topLeft.y) / 2 },
                 abs(rect.bottomRight.x - rect.topLeft.x) / 2, this->widget->size.top);
 
       result |= UpdateRegion{ rect, rmlib::fb::Waveform::DU };
@@ -172,14 +252,14 @@ protected:
 };
 
 template<typename Child>
-class CircularBorder : public Widget<CircularBorderRenderObject<Child>> {
+class RoundBorder : public Widget<RoundBorderRenderObject<Child>> {
 private:
 public:
-  CircularBorder(Child child, Insets size, int color = black)
+  RoundBorder(Child child, Insets size, int color = black)
     : child(std::move(child)), size(size), color(color) {}
 
   std::unique_ptr<RenderObject> createRenderObject() const {
-    return std::make_unique<CircularBorderRenderObject<Child>>(*this);
+    return std::make_unique<RoundBorderRenderObject<Child>>(*this);
   }
 
   Child child;

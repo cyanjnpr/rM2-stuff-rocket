@@ -1,9 +1,8 @@
-reMarkable Stuff
+reMarkable Stuff (fork)
 ================
-[![Build](https://github.com/timower/rM2-stuff/actions/workflows/build.yml/badge.svg)](https://github.com/timower/rM2-stuff/actions/workflows/build.yml)
-[![codecov](https://codecov.io/github/timower/rM2-stuff/graph/badge.svg?token=SN0AG39539)](https://codecov.io/github/timower/rM2-stuff)
 
-Collection of reMarkable related apps, utilities and libraries.
+Collection of reMarkable related apps, utilities and libraries. 
+Some [minor changes](https://github.com/cyanjnpr/rM2-stuff?tab=readme-ov-file#rocket) were made to rocket launcher and rMlib compared to the upstream.
 
 Projects
 --------
@@ -13,6 +12,7 @@ Projects
 [![3.3: supported](https://img.shields.io/badge/3.3-supported-brightgreen)](https://support.remarkable.com/s/article/Software-release-3-3)
 [![3.5: supported](https://img.shields.io/badge/3.5-supported-brightgreen)](https://support.remarkable.com/s/article/Software-release-3-5)
 [![3.8: experimental](https://img.shields.io/badge/3.8-experimental-orange)](https://support.remarkable.com/s/article/Software-release-3-8)
+[![3.20: experimental](https://img.shields.io/badge/3.20-experimental-orange)](https://support.remarkable.com/s/article/Software-release-3-20)
 
 Custom implementation for [reMarkable 2 framebuffer](https://github.com/ddvk/remarkable2-framebuffer).
 The differences are:
@@ -33,6 +33,15 @@ More usage information can be found in the yaft [Readme](apps/yaft).
 
 Launcher that uses the power button to show.
 
+Changes made in this fork:
+    - If set, passcode is copied from xochitl to display additional lockscreen in rocket itself
+        - instead of timeout after multiple failures to authenticate, device is shutdown to maintain security
+    - Launcher keeps focus on the previous app not the current one
+        - this behavior enables switching between two currently used apps by double clicking the power button
+    - App widgets are not visible while device is sleeping
+    - Poweroff & reboot buttons in the launcher menu
+
+<img src="doc/rocket_lockscreen.png" width=500/>
 <img src="doc/rocket.png" width=500/>
 
 When pressing the power button, the app drawer will be shown with a timeout of 10 seconds.

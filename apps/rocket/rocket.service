@@ -5,6 +5,7 @@ StartLimitIntervalSec=600
 StartLimitBurst=4
 
 [Service]
+ExecStartPre=/bin/sleep 2
 ExecStart=/opt/bin/rocket
 Restart=on-failure
 RestartSec=5

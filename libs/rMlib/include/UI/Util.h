@@ -17,6 +17,11 @@ struct Insets {
   int right = 0;
 
   constexpr static Insets all(int size) { return { size, size, size, size }; }
+  constexpr static Insets sides(int top, int bottom, int left, int right) { return { top, bottom, left, right }; }
+  constexpr static Insets only_left(int size) { return { 0, 0, size, 0 }; }
+  constexpr static Insets only_right(int size) { return { 0, 0, 0, size }; }
+  constexpr static Insets only_top(int size) { return { size, 0, 0, 0 }; }
+  constexpr static Insets only_bottom(int size) { return { 0, size, 0, 0 }; }
 
   constexpr int horizontal() const { return left + right; }
   constexpr int vertical() const { return top + bottom; }

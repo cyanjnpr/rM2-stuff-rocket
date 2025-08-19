@@ -5,6 +5,8 @@
 
 #include <UI.h>
 
+#include <chrono>
+
 class LauncherState;
 
 class LauncherWidget : public rmlib::StatefulWidget<LauncherWidget> {
@@ -28,32 +30,27 @@ public:
     const auto text = [this]() -> std::string {
       switch (sleepCountdown) {
         case -1:
-          return "Welcome";
-        case 0:
-          return "Sleeping";
+          return "";
         default:
-          return "Sleeping in : " + std::to_string(sleepCountdown);
+          return "Sleeping in: " + std::to_string(sleepCountdown);
       }
     }();
 
-    auto button = [this, &context] {
-      if (sleepCountdown > 0) {
-        return Button(
-          "Stop", [this] { setState([](auto& self) { self.stopTimer(); }); });
-      }
-      if (sleepCountdown == 0) {
-        // TODO: make hideable?
-        return Button("...", [] {});
-      }
-      return Button("Sleep", [this, &context] {
-        setState([&context](auto& self) { self.startTimer(context, 0); });
-      });
-    }();
+    // auto button = [this, &context] {
+    //   if (sleepCountdown > 0) {
+    //     return Button(
+    //       "Stop", [this] { setState([](auto& self) { self.stopTimer(); }); });
+    //   }
+    //   if (sleepCountdown == 0) {
+    //     // TODO: make hideable? done. hehe
+    //     return Button("...", [] {});
+    //   }
+    //   return Button("Sleep", [this, &context] {
+    //     setState([&context](auto& self) { self.startTimer(context, 0); });
+    //   });
+    // }();
 
-    return Center(Padding(
-      Column(Padding(Text(text, 2 * default_text_size), Insets::all(10))),
-           // button),
-      Insets::all(50)));
+    return Center(Padding(Text(text, 2 * default_text_size), Insets::all(50)));
   }
 
   auto runningApps() const {
@@ -101,7 +98,18 @@ public:
   auto launcher(rmlib::AppContext& context) const {
     using namespace rmlib;
 
-    return Cleared(Column(header(context), runningApps(), appList()));
+    std::vector<DynamicWidget> widgets;
+    auto controls = Corner(Column(
+        Button("Shutdown", [this] { setState([](auto& self) { system("/sbin/poweroff"); }); }),
+        Button("Reboot  ", [this] { setState([](auto& self) { system("/sbin/reboot"); }); })
+      ), 0);
+    auto menu = Column(header(context), runningApps(), appList());
+    widgets.push_back(std::move(controls));
+    widgets.push_back(std::move(menu));
+
+    return Stack(std::move(widgets), false);
+    // Cleared()
+    // return Column(header(context), runningApps(), appList());
   }
 
   auto lockscreen(rmlib::AppContext& context) const {
@@ -110,44 +118,44 @@ public:
     std::string passcodeCopy = passcode;
     std::fill(passcodeCopy.begin(), passcodeCopy.end(), '*');
 
-    auto unlockText = Text("Enter passcode:", 2 * default_text_size);
-    auto passcodeText = Text(passcodeCopy, (int)(2 * default_text_size));
+    auto unlockText = Text("Enter your passcode", 1.5 * default_text_size);
+    auto passcodeText = Text(passcodeCopy, 1.5 * default_text_size);
 
-    auto b1 = Button(
+    auto b1 = RoundButton(
       "1", [this] { setState([](auto& self) { self.typePasscode('1'); }); }, 
-      default_text_size * 1.5, 15);
-    auto b2 = Button(
+      default_text_size * 1.5, 25);
+    auto b2 = RoundButton(
       "2", [this] { setState([](auto& self) { self.typePasscode('2'); }); }, 
-      default_text_size * 1.5, 15);
-    auto b3 = Button(
+      default_text_size * 1.5, 25);
+    auto b3 = RoundButton(
       "3", [this] { setState([](auto& self) { self.typePasscode('3');}); }, 
-      default_text_size * 1.5, 15);
-    auto b4 = Button(
+      default_text_size * 1.5, 25);
+    auto b4 = RoundButton(
       "4", [this] { setState([](auto& self) { self.typePasscode('4'); }); }, 
-      default_text_size * 1.5, 15);
-    auto b5 = Button(
+      default_text_size * 1.5, 25);
+    auto b5 = RoundButton(
       "5", [this] { setState([](auto& self) { self.typePasscode('5'); }); }, 
-      default_text_size * 1.5, 15);
-    auto b6 = Button(
+      default_text_size * 1.5, 25);
+    auto b6 = RoundButton(
       "6", [this] { setState([](auto& self) { self.typePasscode('6'); }); }, 
-      default_text_size * 1.5, 15);
-    auto b7 = Button(
+      default_text_size * 1.5, 25);
+    auto b7 = RoundButton(
       "7", [this] { setState([](auto& self) { self.typePasscode('7'); }); }, 
-      default_text_size * 1.5, 15);
-    auto b8 = Button(
+      default_text_size * 1.5, 25);
+    auto b8 = RoundButton(
       "8", [this] { setState([](auto& self) { self.typePasscode('8'); }); }, 
-      default_text_size * 1.5, 15);
-    auto b9 = Button(
+      default_text_size * 1.5, 25);
+    auto b9 = RoundButton(
       "9", [this] { setState([](auto& self) { self.typePasscode('9'); }); }, 
-      default_text_size * 1.5, 15);
-    auto b0 = Button(
+      default_text_size * 1.5, 25);
+    auto b0 = RoundButton(
       "0", [this] { setState([](auto& self) { self.typePasscode('0'); }); }, 
-      default_text_size * 1.5, 15);
-    auto bClear = Button(
+      default_text_size * 1.5, 25);
+    auto bClear = RoundButton(
       "<=", [this] { setState([](auto& self) { if (!self.passcode.empty()) {
         self.passcode.pop_back();
       } }); }, 
-      default_text_size * 1.5, 15);
+      default_text_size * 0.75, 25);
 
     return Cleared(Column(
       Padding(unlockText, Insets::all(50)),
@@ -155,7 +163,8 @@ public:
       Row(Padding(b1, Insets::all(30)), Padding(b2, Insets::all(30)), Padding(b3, Insets::all(30))),
       Row(Padding(b4, Insets::all(30)), Padding(b5, Insets::all(30)), Padding(b6, Insets::all(30))),
       Row(Padding(b7, Insets::all(30)), Padding(b8, Insets::all(30)), Padding(b9, Insets::all(30))),
-      Row(Padding(b0, Insets::all(30)), Padding(bClear, Insets::all(30)))
+      Row(Padding(b0, Insets::sides(30, 30, 116 + default_text_size * 1.5, 30)), Padding(bClear, Insets::all(30)))
+      // 116 = 30 * 2 + 2 * 3 + 25 * 2
     ));
   }
 
@@ -185,7 +194,7 @@ public:
           //   const Canvas& canvas = img->canvas;
           //   return Center(Sized(Image(canvas), 1404, 1872));
           // }
-          return Center(Text("Zzz...", 2 * default_text_size));
+          return Cleared(Center(Text("Zzz...", 2 * default_text_size)));
         }
         if (isPasscodeGood || xochitlPasscode.size() == 0) {
           return launcher(context);
@@ -209,7 +218,24 @@ public:
       Gestures{}
         .onKeyDown([this, &context](auto keyCode) {
           if (keyCode == KEY_POWER) {
-            setState([&context](auto& self) { self.toggle(context); });
+            setState([&context](auto& self) { 
+              std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+              self.lastKeyPress = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+             });
+          }
+        })
+        .onKeyUp([this, &context](auto keyCode) {
+          if (keyCode == KEY_POWER) {
+            setState([&context](auto& self) { 
+              std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+              if (std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() - self.lastKeyPress
+                    > 500) {
+                // WIP
+                // writeImage("/home/root/screenshot.png", *self.fbCanvas);
+              } else {
+                self.toggle(context);
+              }
+             });
           }
         })
         .onAny([this]() { resetInactivity(); }));
@@ -251,6 +277,8 @@ private:
   std::string xochitlPasscode;
   bool isPasscodeGood;
   int attempts;
+
+  int64_t lastKeyPress = 0;
 
   std::optional<rmlib::MemoryCanvas> backupBuffer;
 
