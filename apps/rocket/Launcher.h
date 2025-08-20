@@ -3,6 +3,8 @@
 #include "App.h"
 #include "AppWidgets.h"
 
+#include "Lockscreen.h"
+
 #include <UI.h>
 
 #include <chrono>
@@ -24,7 +26,7 @@ class LauncherState : public rmlib::StateBase<LauncherWidget> {
 public:
   void init(rmlib::AppContext& context, const rmlib::BuildContext& /*unused*/);
 
-  auto header(rmlib::AppContext& context) const {
+  auto header(/*rmlib::AppContext& context*/) const {
     using namespace rmlib;
 
     const auto text = [this]() -> std::string {
@@ -36,21 +38,7 @@ public:
       }
     }();
 
-    // auto button = [this, &context] {
-    //   if (sleepCountdown > 0) {
-    //     return Button(
-    //       "Stop", [this] { setState([](auto& self) { self.stopTimer(); }); });
-    //   }
-    //   if (sleepCountdown == 0) {
-    //     // TODO: make hideable? done. hehe
-    //     return Button("...", [] {});
-    //   }
-    //   return Button("Sleep", [this, &context] {
-    //     setState([&context](auto& self) { self.startTimer(context, 0); });
-    //   });
-    // }();
-
-    return Center(Padding(Text(text, 2 * default_text_size), Insets::all(50)));
+    return Padding(Text(text), Insets::all(10));
   }
 
   auto runningApps() const {
@@ -103,75 +91,19 @@ public:
         Button("Shutdown", [this] { setState([](auto& self) { system("/sbin/poweroff"); }); }),
         Button("Reboot  ", [this] { setState([](auto& self) { system("/sbin/reboot"); }); })
       ), 0);
-    auto menu = Column(header(context), runningApps(), appList());
-    widgets.push_back(std::move(controls));
-    widgets.push_back(std::move(menu));
+    auto head = Corner(header(), 1);
+    auto menu = Center(Column(runningApps(), appList()));
+    widgets.emplace_back(std::move(controls));
+    widgets.emplace_back(std::move(head));
+    widgets.emplace_back(std::move(menu));
 
     return Stack(std::move(widgets), false);
-    // Cleared()
-    // return Column(header(context), runningApps(), appList());
-  }
-
-  auto lockscreen(rmlib::AppContext& context) const {
-    using namespace rmlib;
-
-    std::string passcodeCopy = passcode;
-    std::fill(passcodeCopy.begin(), passcodeCopy.end(), '*');
-
-    auto unlockText = Text("Enter your passcode", 1.5 * default_text_size);
-    auto passcodeText = Text(passcodeCopy, 1.5 * default_text_size);
-
-    auto b1 = RoundButton(
-      "1", [this] { setState([](auto& self) { self.typePasscode('1'); }); }, 
-      default_text_size * 1.5, 25);
-    auto b2 = RoundButton(
-      "2", [this] { setState([](auto& self) { self.typePasscode('2'); }); }, 
-      default_text_size * 1.5, 25);
-    auto b3 = RoundButton(
-      "3", [this] { setState([](auto& self) { self.typePasscode('3');}); }, 
-      default_text_size * 1.5, 25);
-    auto b4 = RoundButton(
-      "4", [this] { setState([](auto& self) { self.typePasscode('4'); }); }, 
-      default_text_size * 1.5, 25);
-    auto b5 = RoundButton(
-      "5", [this] { setState([](auto& self) { self.typePasscode('5'); }); }, 
-      default_text_size * 1.5, 25);
-    auto b6 = RoundButton(
-      "6", [this] { setState([](auto& self) { self.typePasscode('6'); }); }, 
-      default_text_size * 1.5, 25);
-    auto b7 = RoundButton(
-      "7", [this] { setState([](auto& self) { self.typePasscode('7'); }); }, 
-      default_text_size * 1.5, 25);
-    auto b8 = RoundButton(
-      "8", [this] { setState([](auto& self) { self.typePasscode('8'); }); }, 
-      default_text_size * 1.5, 25);
-    auto b9 = RoundButton(
-      "9", [this] { setState([](auto& self) { self.typePasscode('9'); }); }, 
-      default_text_size * 1.5, 25);
-    auto b0 = RoundButton(
-      "0", [this] { setState([](auto& self) { self.typePasscode('0'); }); }, 
-      default_text_size * 1.5, 25);
-    auto bClear = RoundButton(
-      "<=", [this] { setState([](auto& self) { if (!self.passcode.empty()) {
-        self.passcode.pop_back();
-      } }); }, 
-      default_text_size * 0.75, 25);
-
-    return Cleared(Column(
-      Padding(unlockText, Insets::all(50)),
-      Padding(passcodeText, Insets::all(100)), 
-      Row(Padding(b1, Insets::all(30)), Padding(b2, Insets::all(30)), Padding(b3, Insets::all(30))),
-      Row(Padding(b4, Insets::all(30)), Padding(b5, Insets::all(30)), Padding(b6, Insets::all(30))),
-      Row(Padding(b7, Insets::all(30)), Padding(b8, Insets::all(30)), Padding(b9, Insets::all(30))),
-      Row(Padding(b0, Insets::sides(30, 30, 116 + default_text_size * 1.5, 30)), Padding(bClear, Insets::all(30)))
-      // 116 = 30 * 2 + 2 * 3 + 25 * 2
-    ));
   }
 
   auto build(rmlib::AppContext& context,
-             const rmlib::BuildContext& /*unused*/) const {
+             const rmlib::BuildContext& b/*unused*/) const {
     using namespace rmlib;
-
+    
     const Canvas* background = nullptr;
     std::optional<Size> backgroundSize = {};
     if (const auto* currentApp = getCurrentApp(); currentApp != nullptr) {
@@ -192,14 +124,16 @@ public:
           // auto img = ImageCanvas::load("/home/root/wallpapers/suspended.png");
           // if (img.has_value()) {
           //   const Canvas& canvas = img->canvas;
-          //   return Center(Sized(Image(canvas), 1404, 1872));
+          //   return Center(Image(canvas));
           // }
           return Cleared(Center(Text("Zzz...", 2 * default_text_size)));
         }
-        if (isPasscodeGood || xochitlPasscode.size() == 0) {
-          return launcher(context);
-        }
-        return lockscreen(context);
+
+        LockscreenWidget lockscreen = LockscreenWidget([this, &context] {
+          setState([](auto& self) { self.unlock(); });
+        });
+        if (isUnlocked) { return launcher(context); }
+        return lockscreen;
       }
 
       if (background == nullptr) {
@@ -230,8 +164,10 @@ public:
               std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
               if (std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() - self.lastKeyPress
                     > 500) {
-                // WIP
-                // writeImage("/home/root/screenshot.png", *self.fbCanvas);
+                OptError<> result =  writeImage("/tmp/rocket_screenshot.png", *self.fbCanvas);
+                if (result) {
+                  std::cout << "Screenshot saved at /tmp/rocket_screenshot.png" << std::endl;
+                }
               } else {
                 self.toggle(context);
               }
@@ -267,16 +203,13 @@ private:
 
   void resetInactivity() const;
 
-  void typePasscode(char rune);
+  void unlock();
 
   std::vector<App> apps;
   std::string currentAppPath;
   std::string previousAppPath;
 
-  std::string passcode;
-  std::string xochitlPasscode;
-  bool isPasscodeGood;
-  int attempts;
+  bool isUnlocked = false;
 
   int64_t lastKeyPress = 0;
 

@@ -7,7 +7,6 @@ using namespace rmlib;
 namespace {
 
 constexpr std::array static_app_paths = { "/opt/etc/draft", "/etc/draft" };
-const std::string xochitl_conf_path = "/home/root/.config/remarkable/xochitl.conf";
 
 #ifndef KEY_POWER
 #define KEY_POWER 116
@@ -23,26 +22,6 @@ LauncherWidget::createState() {
 void
 LauncherState::init(rmlib::AppContext& context,
                     const rmlib::BuildContext& /*unused*/) {
-  attempts = 0;
-  xochitlPasscode = "";
-
-  unistdpp::Result<std::string> result = unistdpp::readFile(std::filesystem::path(xochitl_conf_path));
-  if (result.has_value()) {
-    std::istringstream stream(result.value());
-    std::string line;
-    std::string prefix = "Passcode";
-
-    while (std::getline(stream, line)) {
-        if (line.compare(0, prefix.size(), prefix) == 0) {
-          size_t pos = line.find('=');
-          if (pos != std::string::npos && pos + 1 < line.size()) {
-            xochitlPasscode = line.substr(pos + 1); 
-            break;
-          }
-        }
-    }
-  }
-
   if (auto* key = context.getInputManager().getBaseDevices().key;
       key != nullptr) {
     key->grab();
@@ -74,7 +53,7 @@ LauncherState::init(rmlib::AppContext& context,
 
 bool
 LauncherState::sleep() {
-  isPasscodeGood = false;
+  isUnlocked = false;
   system("/sbin/rmmod brcmfmac");
   int res = system("echo \"mem\" > /sys/power/state");
   system("/sbin/modprobe brcmfmac");
@@ -132,12 +111,16 @@ LauncherState::tick() const {
   });
 }
 
+void LauncherState::unlock() {
+  isUnlocked = true;
+}
+
 void
 LauncherState::toggle(rmlib::AppContext& context) {
   if (visible) {
-    if (!isPasscodeGood) {
+    if (!isUnlocked) {
       // something breaks if button is clicked a few times with timer == 0
-      //sh: line 1: echo: write error: Device or resource busy
+      // sh: line 1: echo: write error: Device or resource busy
       // driver unloading/loading is my guess
       // startTimer(context, 0);
       return;
@@ -276,21 +259,6 @@ LauncherState::updateStoppedApps() {
 
   if (shouldShow) {
     show();
-  }
-}
-
-
-void LauncherState::typePasscode(char rune) {
-  passcode += rune;
-  if (passcode.size() >= xochitlPasscode.size()) {
-    isPasscodeGood = passcode == xochitlPasscode;
-    attempts++;
-    passcode = "";
-    if (isPasscodeGood) {
-      attempts = 0;
-    } else if (attempts >= 5) {
-      system("/sbin/poweroff");
-    }
   }
 }
 

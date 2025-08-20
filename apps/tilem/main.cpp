@@ -7,7 +7,8 @@ using namespace rmlib::input;
 
 namespace {
 
-constexpr auto calc_default_rom = "/home/root/ti84plus.rom";
+// constexpr auto calc_default_rom = "/home/root/ti84plus.rom";
+constexpr auto calc_default_rom = "/opt/roms/ti84plus.rom";
 
 } // namespace
 

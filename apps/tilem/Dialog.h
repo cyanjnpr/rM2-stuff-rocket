@@ -37,9 +37,11 @@ public:
     using namespace rmlib;
     return Center((Border(
       Cleared(Column(
-        Text("Loading ROM '" + romPath + "' failed"),
-        Row(Padding(Button("Download", [&ctx] { Navigator::of(ctx).pop(); }),
-                    Insets::all(10)),
+        // i don't use wifi on my rM
+        Text("Loading ROM '" + romPath + "' failed. Download it and restart the app."),
+        Row(
+          // Padding(Button("Download", [&ctx] { Navigator::of(ctx).pop(); }),
+          //           Insets::all(10)),
             Padding(Button("Exit", [&appCtx] { appCtx.stop(); }),
                     Insets::all(10))))),
       Insets::all(5))));
