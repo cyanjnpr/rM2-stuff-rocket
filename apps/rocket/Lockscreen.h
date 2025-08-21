@@ -1,9 +1,6 @@
 #pragma once
 
-#include "App.h"
 #include <UI.h>
-
-class LauncherState;
 
 class LockscreenState;
 

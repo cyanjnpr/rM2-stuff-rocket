@@ -18,7 +18,7 @@ public:
     , widget(&widget) {}
 
   void update(const Stack<Child>& newWidget) {
-    bool needsDraw = newWidget.children.size() < this->children.size();
+    bool needsDraw = newWidget.children.size() < this->children.size() || widget->shouldUpdate;
     this->updateChildren(*widget, newWidget);
 
     if (needsDraw) {
@@ -74,8 +74,8 @@ private:
 template<typename Child>
 class Stack : public Widget<StackRenderObject<Child>> {
 public:
-  Stack(std::vector<Child> children, bool onlyTopInput = true)
-    : children(std::move(children)), onlyTopInput(onlyTopInput) {}
+  Stack(std::vector<Child> children, bool onlyTopInput = true, bool shouldUpdate = false)
+    : children(std::move(children)), onlyTopInput(onlyTopInput), shouldUpdate(shouldUpdate) {}
 
   std::unique_ptr<RenderObject> createRenderObject() const {
     return std::make_unique<StackRenderObject<Child>>(*this);
@@ -86,6 +86,7 @@ private:
   friend class MultiChildRenderObject<Stack<Child>>;
   std::vector<Child> children;
   bool onlyTopInput;
+  bool shouldUpdate;
 };
 
 } // namespace rmlib

@@ -305,6 +305,9 @@ transform(Canvas& dest,
 }
 
 OptError<>
+writeCroppedImage(const char* path, int startX, int startY, int w, int h, const Canvas& canvas);
+
+OptError<>
 writeImage(const char* path, const Canvas& canvas);
 
 } // namespace rmlib

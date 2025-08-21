@@ -22,6 +22,8 @@ LauncherWidget::createState() {
 void
 LauncherState::init(rmlib::AppContext& context,
                     const rmlib::BuildContext& /*unused*/) {
+  suspendedImage = rmlib::ImageCanvas::load(default_suspended_path);
+
   if (auto* key = context.getInputManager().getBaseDevices().key;
       key != nullptr) {
     key->grab();
@@ -53,7 +55,7 @@ LauncherState::init(rmlib::AppContext& context,
 
 bool
 LauncherState::sleep() {
-  isUnlocked = false;
+  lock();
   system("/sbin/rmmod brcmfmac");
   int res = system("echo \"mem\" > /sys/power/state");
   system("/sbin/modprobe brcmfmac");
@@ -111,8 +113,21 @@ LauncherState::tick() const {
   });
 }
 
+void LauncherState::lock() {
+  isUnlocked = false;
+}
+
 void LauncherState::unlock() {
   isUnlocked = true;
+}
+
+void LauncherState::showScreenshot() {
+  isViewingScreenshot = true;
+  stopTimer();
+}
+
+void LauncherState::hideScreenshot() {
+  isViewingScreenshot = false;
 }
 
 void

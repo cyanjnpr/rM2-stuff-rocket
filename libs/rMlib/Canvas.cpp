@@ -15,6 +15,8 @@
 
 namespace rmlib {
 
+const int DESIRED_IMAGE_COMPONENTS = 2;
+
 namespace {
 constexpr auto uint8_max = std::numeric_limits<std::uint8_t>::max();
 
@@ -260,12 +262,12 @@ ImageCanvas::loadRaw(const char* path) {
   int width = 0;
   int height = 0;
   int imgComponents = 0;
-  auto* mem = stbi_load(path, &width, &height, &imgComponents, 2);
+  auto* mem = stbi_load(path, &width, &height, &imgComponents, DESIRED_IMAGE_COMPONENTS);
   if (mem == nullptr) {
     return std::nullopt;
   }
 
-  return ImageCanvas{ Canvas(mem, width, height, 2) };
+  return ImageCanvas{ Canvas(mem, width, height, DESIRED_IMAGE_COMPONENTS) };
 }
 
 std::optional<ImageCanvas>
@@ -287,7 +289,7 @@ ImageCanvas::load(uint8_t* data, int size, int background) {
   int height = 0;
   int imgComponents = 0;
   auto* mem =
-    stbi_load_from_memory(data, size, &width, &height, &imgComponents, 2);
+    stbi_load_from_memory(data, size, &width, &height, &imgComponents, DESIRED_IMAGE_COMPONENTS);
   if (mem == nullptr) {
     return std::nullopt;
   }
@@ -323,11 +325,32 @@ MemoryCanvas::MemoryCanvas(int width, int height, int components) {
 }
 
 OptError<>
-writeImage(const char* path, const Canvas& canvas) {
-  MemoryCanvas test(canvas.width(), canvas.height(), 1);
+writeCroppedImage(const char* path, int startX, int startY, int w, int h, const Canvas& canvas) {
+  MemoryCanvas test(w, h, 2);
 
   canvas.forEach([&](auto x, auto y, auto pixel) {
-    test.canvas.setPixel({ x, y }, greyFromRGB565(pixel));
+    if (x >= startX && y >= startY && (x - startX) < w && (y - startY) < h) {
+      test.canvas.setPixel({ x - startX, y - startY }, uint16_t(0xff00 | greyFromRGB565(pixel)));
+    }
+  });
+
+  if (stbi_write_png(path,
+                      test.canvas.width(),
+                      test.canvas.height(),
+                      test.canvas.components(),
+                      test.canvas.getMemory(),
+                      test.canvas.lineSize()) == 0) {
+      return Error::make("Error writing image");
+  }
+  return {};
+}
+
+OptError<>
+writeImage(const char* path, const Canvas& canvas) {
+  MemoryCanvas test(canvas.width(), canvas.height(), 2);
+
+  canvas.forEach([&](auto x, auto y, auto pixel) {
+    test.canvas.setPixel({ x, y }, uint16_t(0xff00 | greyFromRGB565(pixel)));
   });
 
   if (stbi_write_png(path,

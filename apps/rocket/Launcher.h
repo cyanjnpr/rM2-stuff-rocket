@@ -1,13 +1,13 @@
 #pragma once
 
+#include <UI.h>
+#include <chrono>
+
 #include "App.h"
 #include "AppWidgets.h"
 
 #include "Lockscreen.h"
-
-#include <UI.h>
-
-#include <chrono>
+#include "Screenshoter.h"
 
 class LauncherState;
 
@@ -20,6 +20,8 @@ class LauncherState : public rmlib::StateBase<LauncherWidget> {
   constexpr static auto default_sleep_timeout = 10;
   constexpr static auto retry_sleep_timeout = 8;
   constexpr static auto default_inactivity_timeout = 20;
+  const char* default_screenshot_path = "/tmp/rocket_screenshot.png";
+  const char* default_suspended_path = "/usr/share/remarkable/suspended.png";
 
   constexpr static rmlib::Size splash_size = { 512, 512 };
 
@@ -88,8 +90,8 @@ public:
 
     std::vector<DynamicWidget> widgets;
     auto controls = Corner(Column(
-        Button("Shutdown", [this] { setState([](auto& self) { system("/sbin/poweroff"); }); }),
-        Button("Reboot  ", [this] { setState([](auto& self) { system("/sbin/reboot"); }); })
+        Button("Shutdown", [] { system("/sbin/poweroff"); }),
+        Button("Reboot  ", [] { system("/sbin/reboot");  })
       ), 0);
     auto head = Corner(header(), 1);
     auto menu = Center(Column(runningApps(), appList()));
@@ -116,20 +118,21 @@ public:
     }
 
     auto ui = [&]() -> DynamicWidget {
+      if (isViewingScreenshot) {
+        return ScreenshoterWidget(default_screenshot_path, [this] {
+          setState([](auto& self) { self.isViewingScreenshot = false; });
+        });
+      }
       if (visible) {
         if (sleepCountdown == 0) {
-          // SEGFAULTS based on image parameters unknown to me
-          // possibly color profile
-          // xkcd comics work fine so do draft icons
-          // auto img = ImageCanvas::load("/home/root/wallpapers/suspended.png");
-          // if (img.has_value()) {
-          //   const Canvas& canvas = img->canvas;
-          //   return Center(Image(canvas));
-          // }
+          if (suspendedImage.has_value()) {
+            return Cleared(Center(Image(suspendedImage->canvas)));
+          }
+
           return Cleared(Center(Text("Zzz...", 2 * default_text_size)));
         }
 
-        LockscreenWidget lockscreen = LockscreenWidget([this, &context] {
+        LockscreenWidget lockscreen = LockscreenWidget([this] {
           setState([](auto& self) { self.unlock(); });
         });
         if (isUnlocked) { return launcher(context); }
@@ -160,16 +163,18 @@ public:
         })
         .onKeyUp([this, &context](auto keyCode) {
           if (keyCode == KEY_POWER) {
-            setState([&context](auto& self) { 
+            setState([this, &context](auto& self) { 
               std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
               if (std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() - self.lastKeyPress
-                    > 500) {
-                OptError<> result =  writeImage("/tmp/rocket_screenshot.png", *self.fbCanvas);
-                if (result) {
-                  std::cout << "Screenshot saved at /tmp/rocket_screenshot.png" << std::endl;
+                    > 500 && isUnlocked && !isViewingScreenshot) {
+                if (writeImage(default_screenshot_path, *self.fbCanvas)) {
+                  std::cout << "Screenshot saved at " <<  default_screenshot_path << std::endl;
+                  if (!self.visible) self.show();
+                  self.showScreenshot();
                 }
               } else {
-                self.toggle(context);
+                if (self.isViewingScreenshot) self.hideScreenshot();
+                else self.toggle(context);
               }
              });
           }
@@ -203,13 +208,19 @@ private:
 
   void resetInactivity() const;
 
+  void lock();
   void unlock();
+  void showScreenshot();
+  void hideScreenshot();
 
   std::vector<App> apps;
   std::string currentAppPath;
   std::string previousAppPath;
 
   bool isUnlocked = false;
+  bool isViewingScreenshot = false;
+
+  std::optional<rmlib::ImageCanvas> suspendedImage;
 
   int64_t lastKeyPress = 0;
 

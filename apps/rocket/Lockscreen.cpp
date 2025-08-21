@@ -35,6 +35,7 @@ LockscreenState::init(rmlib::AppContext& context,
         }
     }
   }
+  if (xochitlPasscode.empty()) getWidget().onUnlock();
 }
 
 void LockscreenState::typePasscode(char rune) {

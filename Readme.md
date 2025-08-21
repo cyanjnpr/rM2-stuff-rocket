@@ -15,8 +15,14 @@ Changes made in this fork:
     - instead of timeout, after multiple failures to authenticate, device is shutdown to maintain security
 - Launcher keeps focus on the previous app not the current one
     - this behavior enables switching between two currently used apps by double clicking the power button
-- App widgets are not visible while device is sleeping
+- Standard suspended.png is displayed on suspend
 - Poweroff & reboot buttons in the launcher menu
+- **Very** early progress on allowing screenshots to be copied into xochitl notebooks
+    - you need to install [karmtka](https://github.com/cyanjnpr/karMtka) first and place it in a directory added to the PATH
+    - long press the power button to take a screenshot
+    - select area which you intend to copy
+    - press "Copy to Xochitl" button to copy into current notebook (overwrites current page)
+    - in the current state this **will** damage your notebooks, it's all WIP
 
 <img src="doc/rocket_lockscreen.png" width=500/>
 <img src="doc/rocket_menu.png" width=500/>
