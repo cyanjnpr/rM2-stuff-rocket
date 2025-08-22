@@ -1,17 +1,44 @@
 #pragma once
 
+#include <unistdpp/file.h>
 #include <UI.h>
+
+namespace {
+    const std::string xochitl_conf_path = "/home/root/.config/remarkable/xochitl.conf";
+}
 
 class LockscreenState;
 
 class LockscreenWidget : public rmlib::StatefulWidget<LockscreenWidget> {
     public:
         LockscreenWidget(rmlib::Callback onUnlock) 
-            : onUnlock(std::move(onUnlock)) {}
+            : onUnlock(std::move(onUnlock)) {
+            unistdpp::Result<std::string> result = unistdpp::readFile(std::filesystem::path(xochitl_conf_path));
+            if (result.has_value()) {
+                std::istringstream stream(result.value());
+                std::string line;
+                std::string prefix = "Passcode";
+
+                while (std::getline(stream, line)) {
+                    if (line.compare(0, prefix.size(), prefix) == 0) {
+                    size_t pos = line.find('=');
+                    if (pos != std::string::npos && pos + 1 < line.size()) {
+                        xochitlPasscode = line.substr(pos + 1); 
+                        break;
+                    }
+                    }
+                }
+            }
+
+            if (xochitlPasscode.empty()) {
+                this->onUnlock();
+            }
+        }
 
         static LockscreenState createState();
 
         rmlib::Callback onUnlock;
+        std::string xochitlPasscode = "";
 };
 
 class LockscreenState : public rmlib::StateBase<LockscreenWidget> {
@@ -92,6 +119,5 @@ class LockscreenState : public rmlib::StateBase<LockscreenWidget> {
 
         bool isPasscodeGood = false;
         std::string passcode;
-        std::string xochitlPasscode;
         int attempts;
 };

@@ -155,6 +155,12 @@ public:
     drawLine(bottomRight, Point{ topLeft.x, bottomRight.y }, val);
   }
 
+  void drawBlock(Point topLeft, Point bottomRight, int val) {
+    for (int y = topLeft.y; y < bottomRight.y; y++) {
+      drawLine({topLeft.x, y}, {bottomRight.x, y}, val);
+    }
+  }
+
   int components() const { return mComponents; }
   int width() const { return mWidth; }
   int height() const { return mHeight; }

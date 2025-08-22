@@ -103,7 +103,7 @@ public:
   }
 
   auto build(rmlib::AppContext& context,
-             const rmlib::BuildContext& b/*unused*/) const {
+             const rmlib::BuildContext& /*unused*/) const {
     using namespace rmlib;
     
     const Canvas* background = nullptr;
@@ -166,7 +166,7 @@ public:
             setState([this, &context](auto& self) { 
               std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
               if (std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() - self.lastKeyPress
-                    > 500 && isUnlocked && !isViewingScreenshot) {
+                    > 400 && isUnlocked && !isViewingScreenshot) {
                 if (writeImage(default_screenshot_path, *self.fbCanvas)) {
                   std::cout << "Screenshot saved at " <<  default_screenshot_path << std::endl;
                   if (!self.visible) self.show();

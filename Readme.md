@@ -3,7 +3,7 @@ reMarkable Stuff (fork)
 
 Collection of reMarkable related apps, utilities and libraries.
 
-Differences compared to the upstream
+Differences compared to the upstream repo
 --------
 
 ### Rocket
@@ -11,18 +11,21 @@ Differences compared to the upstream
 Launcher that uses the power button to show.
 
 Changes made in this fork:
-- If set, passcode is copied from xochitl to display additional lockscreen in rocket itself
-    - instead of timeout, after multiple failures to authenticate, device is shutdown to maintain security
+- If set, passcode is copied from xochitl config to display additional lockscreen in rocket itself
+    - after multiple failures to authenticate, instead of timeout, device is shutdown to maintain security
 - Launcher keeps focus on the previous app not the current one
     - this behavior enables switching between two currently used apps by double clicking the power button
 - Standard suspended.png is displayed on suspend
 - Poweroff & reboot buttons in the launcher menu
-- **Very** early progress on allowing screenshots to be copied into xochitl notebooks
-    - you need to install [karmtka](https://github.com/cyanjnpr/karMtka) first and place it in a directory added to the PATH
+- Paste screenshots into xochitl notebooks
+    - first, you need to build or download binary release of [karmtka](https://github.com/cyanjnpr/karMtka) and place it in a directory added to the PATH under the name 'karmtka'
     - long press the power button to take a screenshot
-    - select area which you intend to copy
-    - press "Copy to Xochitl" button to copy into current notebook (overwrites current page)
-    - in the current state this **will** damage your notebooks, it's all WIP
+    - select area which you intend to copy by dragging
+    - press "Copy to Xochitl" button and adjust operation parameters
+    - screenshot will be converted to lines format and inserted into desired page
+
+> [!Warning]
+> You risk damaging your notebooks by using screenshot utility, it's WIP
 
 <img src="doc/rocket_lockscreen.png" width=500/>
 <img src="doc/rocket_menu.png" width=500/>
@@ -39,7 +42,7 @@ Library for writing remarkable apps.
 Includes an extensive declarative UI framework based on Flutter.
 
 Changes made in this fork:
-- a few tiny changes to widgets and layouts to improve look & feel
+- Introduced a couple of new widgets and layouts to improve look & feel
 
 Building
 --------
