@@ -35,12 +35,22 @@ ScreenshoterState::isInControls(rmlib::Point pos) const {
 }
 
 std::string 
-ScreenshoterState::buildCopyCommand(std::string quality, std::string mode) const {
+ScreenshoterState::buildCopyCommand() const {
     std::ostringstream builder;
     builder << "karmtka -g " 
         << getWidget().screenshot_edit_path 
         << " -m 0 -q " << quality 
         << " -x -i " << mode 
         << " --overwrite";
+    return builder.str();
+}
+
+std::string
+ScreenshoterState::buildSimulateCommand() const {
+    std::ostringstream builder;
+    builder << "karmtka" 
+        << " -x -i " << mode 
+        << " --overwrite --dry"
+        << " > " << default_info_path;
     return builder.str();
 }

@@ -4,6 +4,7 @@
 #include <UI/Navigator.h>
 #include <algorithm>
 #include <sstream>
+#include <unistdpp/file.h>
 
 namespace {
 
@@ -38,14 +39,14 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
             int spacing = 25;
             
             return Center(Cleared(Border(Column(
-                Padding(Row(Text("A few last options")), Insets::all(spacing)),
+                Padding(Row(Text("Copy into Notebook")), Insets::all(spacing)),
                 Padding(Row(
-                    SpinWidget("Screenshot Quality", [this](std::string value) {
+                    SpinWidget("Quality", [this](std::string value) {
                         setState([value](auto& self) { self.quality = value; });
                     }, 2, 255, 1, 50
                 )), Insets::all(spacing)),
                 Padding(Row(
-                    SpinWidget("Inject Mode", [this](std::string value) {
+                    SpinWidget("Target Page", [this](std::string value) {
                         setState([value](auto& self) { self.mode = value; });
                     }, 0, 3, 1, 1, [](int val) {
                         return inject_modes[val];
@@ -58,7 +59,52 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
                             self.isSelecting = true; });
                     }), Insets::all(spacing)),
                     Padding(Button("Copy", [this] {
-                        std::string command = buildCopyCommand(quality, mode);
+                        setState([](auto& self) { 
+                            self.isShowingConfirmation = true; });
+                    }), Insets::all(spacing))
+                ), Insets::all(spacing))
+            ), Insets::all(4))));
+        }
+
+        auto confirmation_dialog(rmlib::AppContext& context) const {
+            using namespace rmlib;
+            int spacing = 30;
+            std::string notebook = "Notebook: ";
+            std::string page = "Page: ";
+            system(buildSimulateCommand().c_str());
+            auto info = unistdpp::readFile(default_info_path);
+            if (info.has_value()) {
+                std::istringstream stream(info.value());
+                std::string line;
+                std::string notebookPrefix = "Notebook";
+                std::string pagePrefix = "Page";
+                while (std::getline(stream, line)) {
+                    if (line.compare(0, notebookPrefix.size(), notebookPrefix) == 0) {
+                        size_t pos = line.find(':');
+                        if (pos != std::string::npos && pos + 1 < line.size()) {
+                            notebook += line.substr(pos + 1, 32); // Text() doesn't support line breaks
+                        }
+                    } else if (line.compare(0, pagePrefix.size(), pagePrefix) == 0) {
+                        size_t pos = line.find(':');
+                        if (pos != std::string::npos && pos + 1 < line.size()) {
+                            page += line.substr(pos + 1, 32);
+                        }
+                    }
+                }
+            }
+            return Center(Cleared(Border(Column(
+                Padding(Row(Text("Confirm the target of this operation")), Insets::all(spacing)),
+                Padding(Row(Text(notebook)), Insets::all(spacing)),
+                Padding(Row(Text(page)), Insets::all(spacing)),
+                Padding(Row(
+                    Padding(Button("Cancel", [this]{
+                        setState([](auto& self) { 
+                            self.resetSelection(); 
+                            self.isSelecting = true;
+                            self.isShowingConfirmation = false; });
+                }), Insets::all(spacing)), 
+                    Padding(Button("Confirm", [this]{
+                        std::string command = buildCopyCommand();
                         system(command.c_str());
                         getWidget().onClose();
                     }), Insets::all(spacing))
@@ -122,6 +168,7 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
             }
             widgets.emplace_back(std::move(screenshot_controls(context)));
             if (!isSelecting) widgets.emplace_back(std::move(copy_dialog(context)));
+            if (isShowingConfirmation) widgets.emplace_back(std::move(confirmation_dialog(context)));
 
             return Stack(std::move(widgets), !isSelecting, isSelecting);
         }
@@ -145,14 +192,17 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
         bool isValidSelection() const;
         void resetSelection();
         bool isInControls(rmlib::Point pos) const;
-        std::string buildCopyCommand(std::string quality, std::string mode) const;
+        std::string buildCopyCommand() const;
+        std::string buildSimulateCommand() const;
 
         rmlib::Point touchDownPoint = {0, 0};
         rmlib::Point selectionStart = {0, 0};
         int selectionWidth = 0;
         int selectionHeight = 0;
         bool isSelecting = true;
+        bool isShowingConfirmation = false;
 
+        const char* default_info_path = "/tmp/karmtka_info.txt";
         std::string quality;
         std::string mode;
 };

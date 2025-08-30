@@ -85,21 +85,49 @@ public:
     return Wrap(widgets);
   }
 
+  auto powerManagementDialog() const {
+    using namespace rmlib;
+    int spacing = 30;
+
+    return Center(Cleared(Border(Column(
+        Padding(Row(Text(managementOperation + " the device?")), Insets::all(spacing)),
+        Padding(Row(
+            Padding(Button("Cancel", [this]{
+                setState([](auto& self) { 
+                    self.isManagingPower = false; });
+        }), Insets::all(spacing)), 
+            Padding(Button("Confirm", [this]{
+                std::string command = "/sbin/" + managementOperation;
+                system(command.c_str());
+            }), Insets::all(spacing))
+        ), Insets::all(spacing))
+    ), Insets::all(4))));
+  }
+
   auto launcher(rmlib::AppContext& context) const {
     using namespace rmlib;
 
     std::vector<DynamicWidget> widgets;
     auto controls = Corner(Column(
-        Button("Shutdown", [] { system("/sbin/poweroff"); }),
-        Button("Reboot  ", [] { system("/sbin/reboot");  })
+        Button("Shutdown", [this] { 
+          setState([](auto& self) {
+            self.managementOperation = "poweroff"; self.isManagingPower = true; 
+          }); }),
+        Button("Reboot  ", [this] { 
+          setState([](auto& self) {
+            self.managementOperation = "reboot"; self.isManagingPower = true; 
+          }); })
       ), 0);
     auto head = Corner(header(), 1);
     auto menu = Center(Column(runningApps(), appList()));
     widgets.emplace_back(std::move(controls));
     widgets.emplace_back(std::move(head));
     widgets.emplace_back(std::move(menu));
+    if (isManagingPower) {
+      widgets.emplace_back(std::move(powerManagementDialog()));
+    }
 
-    return Stack(std::move(widgets), false);
+    return Stack(std::move(widgets), isManagingPower, true);
   }
 
   auto build(rmlib::AppContext& context,
@@ -165,16 +193,11 @@ public:
           if (keyCode == KEY_POWER) {
             setState([this, &context](auto& self) { 
               std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-              if (std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() - self.lastKeyPress
-                    > 400 && isUnlocked && !isViewingScreenshot) {
-                if (writeImage(default_screenshot_path, *self.fbCanvas)) {
-                  std::cout << "Screenshot saved at " <<  default_screenshot_path << std::endl;
-                  if (!self.visible) self.show();
-                  self.showScreenshot();
-                }
+              if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                now.time_since_epoch()).count() - self.lastKeyPress > long_press_ms) {
+                self.long_press(context);
               } else {
-                if (self.isViewingScreenshot) self.hideScreenshot();
-                else self.toggle(context);
+                self.short_press(context);
               }
              });
           }
@@ -208,22 +231,30 @@ private:
 
   void resetInactivity() const;
 
+  void deviceStatus() const;
+
   void lock();
   void unlock();
   void showScreenshot();
   void hideScreenshot();
 
-  std::vector<App> apps;
-  std::string currentAppPath;
-  std::string previousAppPath;
+  void short_press(rmlib::AppContext& context);
+  void long_press(rmlib::AppContext& context);
+
+  std::string managementOperation = "poweroff";
+  bool isManagingPower = false;
+
+  int64_t lastKeyPress = 0;
+  const int long_press_ms = 400;
 
   bool isUnlocked = false;
   bool isViewingScreenshot = false;
 
+  std::vector<App> apps;
+  std::string currentAppPath;
+  std::string previousAppPath;
+
   std::optional<rmlib::ImageCanvas> suspendedImage;
-
-  int64_t lastKeyPress = 0;
-
   std::optional<rmlib::MemoryCanvas> backupBuffer;
 
   rmlib::TimerHandle sleepTimer;

@@ -113,7 +113,45 @@ LauncherState::tick() const {
   });
 }
 
+void LauncherState::long_press(rmlib::AppContext& context) {
+  if (!isUnlocked) return;
+
+  if (visible) {
+    stopTimer();
+    std::string highlightedAppPath = previousAppPath.size() > 0 ? previousAppPath : currentAppPath;
+    int firstActiveIndex = -1;
+    int currentHighlightIndex = -1;
+    
+    for (size_t i = 0; i < apps.size(); i++) {
+      if (firstActiveIndex == -1 && apps[i].isRunning()) {
+        previousAppPath = apps[i].description().path;
+        firstActiveIndex = i;
+      }
+      if (currentHighlightIndex == -1 && apps[i].description().path == highlightedAppPath) {
+        currentHighlightIndex = i;
+      } else if (currentHighlightIndex > -1 && apps[i].isRunning()) {
+        previousAppPath = apps[i].description().path;
+        break;
+      }
+    }
+  } else if (!isViewingScreenshot) {
+    if (writeImage(default_screenshot_path, *fbCanvas)) {
+      std::cout << "Screenshot saved at " <<  default_screenshot_path << std::endl;
+      if (!visible) show();
+      showScreenshot();
+    }
+  }
+}
+
+void LauncherState::short_press(rmlib::AppContext& context) {
+  if (!isUnlocked) return;
+
+  if (isViewingScreenshot) hideScreenshot();
+  else toggle(context);
+}
+
 void LauncherState::lock() {
+  isManagingPower = false;
   isUnlocked = false;
 }
 
@@ -132,11 +170,11 @@ void LauncherState::hideScreenshot() {
 
 void
 LauncherState::toggle(rmlib::AppContext& context) {
+  isManagingPower = false;
   if (visible) {
     if (!isUnlocked) {
       // something breaks if button is clicked a few times with timer == 0
-      // sh: line 1: echo: write error: Device or resource busy
-      // driver unloading/loading is my guess
+      // it's not driver unloading/loading, placing mutex on sleep() call doesn't help
       // startTimer(context, 0);
       return;
     }
@@ -175,6 +213,11 @@ LauncherState::hide(rmlib::AppContext* context) {
   } else if (context != nullptr) {
     startTimer(*context, 0);
   }
+}
+
+void
+LauncherState::deviceStatus() const {
+  
 }
 
 App*
@@ -342,5 +385,5 @@ LauncherState::readApps() {
 
 void
 LauncherState::resetInactivity() const {
-  inactivityCountdown = default_inactivity_timeout;
+  inactivityCountdown = isUnlocked ? default_inactivity_timeout : 2;
 }

@@ -28,9 +28,10 @@ public:
     return container(
       Column(GestureDetector(Sized(Image(canvas), 234, 300),
                              Gestures{}.onTap(onTap)),
-             Row(Text(app.description().name), Button("X", onKill))),
-      Insets::all(isCurrent ? 1 : 2),
-      Insets::all(isCurrent ? 2 : 1),
+             Row(Text(app.description().name), Padding(Corner(Button("X", onKill, default_text_size * 1.1, 1), 2), 
+              Insets::only_left(10)))),
+      Insets::all(isCurrent ? 1 : 4),
+      Insets::all(isCurrent ? 4 : 1),
       Insets::all(2));
   }
 
