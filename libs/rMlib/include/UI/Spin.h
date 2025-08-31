@@ -30,7 +30,7 @@ namespace rmlib {
                             setState([](auto& self) { self.changeValue(-self.getWidget().step); });
                         })
                     ), Insets::all(spacing)), 
-                    Text(getWidget().transform(value), default_text_size, 32), 
+                    Text(getWidget().transform(value), default_text_size, 24), 
                     Padding(Column(
                         Button("=>>", [this]{
                             setState([](auto& self) { self.changeValue(self.getWidget().jump); });

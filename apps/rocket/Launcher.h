@@ -8,6 +8,7 @@
 
 #include "Lockscreen.h"
 #include "Screenshoter.h"
+#include "StatusBar.h"
 
 class LauncherState;
 
@@ -123,6 +124,7 @@ public:
     auto head = Corner(header(), 1);
     auto menu = Center(Column(runningApps(), appList()));
     widgets.emplace_back(std::move(controls));
+    widgets.emplace_back(std::move(Corner(StatusBarWidget(default_inactivity_timeout - inactivityCountdown), 3)));
     widgets.emplace_back(std::move(head));
     widgets.emplace_back(std::move(menu));
     if (isManagingPower) {
@@ -204,7 +206,11 @@ public:
              });
           }
         })
-        .onAny([this]() { resetInactivity(); }));
+        .onAny([this]() { 
+          if (isUnlocked && !isViewingScreenshot && visible && inactivityCountdown != default_inactivity_timeout)
+            setState([](auto& self) { self.resetInactivity(); }); 
+          else resetInactivity(); // setting state onAny is a bad idea, do it only if necessary
+        }));
   }
 
 private:

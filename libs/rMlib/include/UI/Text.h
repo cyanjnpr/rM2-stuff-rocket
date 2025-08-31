@@ -12,7 +12,13 @@ class TextRenderObject;
 class Text : public Widget<TextRenderObject> {
 public:
   Text(std::string text, int fontSize = default_text_size, int maxLength = 1024)
-    : text(std::move(text.substr(0, maxLength))), fontSize(fontSize) {}
+    : fontSize(fontSize) {
+      if (text.size() > maxLength && maxLength > 2) {
+        this->text = text.substr(0, maxLength / 2) + "..." + text.substr(text.size()-maxLength/2);
+      } else {
+        this->text = std::move(text);
+      }
+  }
 
   std::unique_ptr<RenderObject> createRenderObject() const;
 

@@ -18,12 +18,13 @@ Changes made in this fork:
 - Standard suspended.png is displayed on suspend
 - Poweroff & reboot buttons in the launcher menu (with confirmation dialog)
 - Long press the power button in the launcher to switch focus to the next app
+- Status bar with battery charge, current time in the launcher
 - Paste screenshots into xochitl notebooks
     - first, build or download binary release of [karmtka](https://github.com/cyanjnpr/karMtka) and place it in a directory added to the PATH under the name 'karmtka'
     - long press the power button to take a screenshot
     - select area which you intend to copy
-    - press "Copy to Xochitl" button and adjust the operation parameters
-    - screenshot will be converted to lines format and inserted into desired page
+    - press "Copy to Xochitl" button and adjust operation parameters
+    - screenshot will be converted to lines format and inserted into the selected page
 
 <img src="doc/rocket_lockscreen.png" width=500/>
 <img src="doc/rocket_menu.png" width=500/>

@@ -41,7 +41,11 @@ LauncherState::init(rmlib::AppContext& context,
   inactivityTimer = context.addTimer(
     std::chrono::minutes(1),
     [this, &context] {
-      inactivityCountdown -= 1;
+      if (isUnlocked && !isViewingScreenshot && visible)
+        setState([](auto& self) {
+          self.inactivityCountdown -= 1;
+        });
+      else inactivityCountdown -= 1;
       if (inactivityCountdown == 0) {
         resetInactivity();
         setState([&context](auto& self) {
@@ -214,11 +218,6 @@ LauncherState::hide(rmlib::AppContext* context) {
   } else if (context != nullptr) {
     startTimer(*context, 0);
   }
-}
-
-void
-LauncherState::deviceStatus() const {
-  
 }
 
 App*

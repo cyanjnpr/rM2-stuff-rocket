@@ -76,8 +76,8 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
         auto confirmation_dialog(rmlib::AppContext& context) const {
             using namespace rmlib;
             int spacing = 30;
-            std::string notebook = "Notebook: ";
-            std::string page = "Page: ";
+            std::string notebook = "UNKOWN";
+            std::string page = "UNKNOWN";
             system(buildSimulateCommand().c_str());
             auto info = unistdpp::readFile(default_info_path);
             if (info.has_value()) {
@@ -89,20 +89,20 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
                     if (line.compare(0, notebookPrefix.size(), notebookPrefix) == 0) {
                         size_t pos = line.find(':');
                         if (pos != std::string::npos && pos + 1 < line.size()) {
-                            notebook += line.substr(pos + 1);
+                            notebook = line.substr(pos + 1);
                         }
                     } else if (line.compare(0, pagePrefix.size(), pagePrefix) == 0) {
                         size_t pos = line.find(':');
                         if (pos != std::string::npos && pos + 1 < line.size()) {
-                            page += line.substr(pos + 1);
+                            page = line.substr(pos + 1);
                         }
                     }
                 }
             }
             return Center(Cleared(Border(Column(
                 Padding(Row(Text("Confirm the target of this operation")), Insets::all(spacing)),
-                Padding(Row(Text(notebook,  default_text_size, 32)), Insets::all(spacing)),
-                Padding(Row(Text(page, default_text_size, 32)), Insets::all(spacing)),
+                Padding(Row(Text("Notebook: "), Text(notebook,  default_text_size, 24)), Insets::all(spacing)),
+                Padding(Row(Text("Page: "), Text(page, default_text_size, 24)), Insets::all(spacing)),
                 Padding(Row(
                     Padding(Button("Cancel", [this]{
                         setState([](auto& self) { 
