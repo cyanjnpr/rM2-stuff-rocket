@@ -89,14 +89,16 @@ public:
     using namespace rmlib;
     int spacing = 30;
 
+    std::string capitalizedOperation = managementOperation;
+    capitalizedOperation[0] ^= 0x20;
     return Center(Cleared(Border(Column(
-        Padding(Row(Text(managementOperation + " the device?")), Insets::all(spacing)),
+        Padding(Row(Text(capitalizedOperation + " the device?")), Insets::all(spacing)),
         Padding(Row(
             Padding(Button("Cancel", [this]{
                 setState([](auto& self) { 
                     self.isManagingPower = false; });
         }), Insets::all(spacing)), 
-            Padding(Button("Confirm", [this]{
+            Padding(Button(capitalizedOperation, [this]{
                 std::string command = "/sbin/" + managementOperation;
                 system(command.c_str());
             }), Insets::all(spacing))

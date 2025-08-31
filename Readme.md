@@ -16,23 +16,21 @@ Changes made in this fork:
 - Launcher keeps focus on the previous app not the current one
     - this behavior enables switching between two currently used apps by double clicking the power button
 - Standard suspended.png is displayed on suspend
-- Poweroff & reboot buttons in the launcher menu
+- Poweroff & reboot buttons in the launcher menu (with confirmation dialog)
+- Long press the power button in the launcher to switch focus to the next app
 - Paste screenshots into xochitl notebooks
-    - first, you need to build or download binary release of [karmtka](https://github.com/cyanjnpr/karMtka) and place it in a directory added to the PATH under the name 'karmtka'
+    - first, build or download binary release of [karmtka](https://github.com/cyanjnpr/karMtka) and place it in a directory added to the PATH under the name 'karmtka'
     - long press the power button to take a screenshot
-    - select area which you intend to copy by dragging
-    - press "Copy to Xochitl" button and adjust operation parameters
+    - select area which you intend to copy
+    - press "Copy to Xochitl" button and adjust the operation parameters
     - screenshot will be converted to lines format and inserted into desired page
-
-> [!Warning]
-> You risk damaging your notebooks by using screenshot utility, it's WIP
 
 <img src="doc/rocket_lockscreen.png" width=500/>
 <img src="doc/rocket_menu.png" width=500/>
 
 When pressing the power button, the app drawer will be shown with a timeout of 10 seconds.
 After 10 seconds the device will go to sleep, unless an app is picked before that timeout.
-You can also interrupt the timeout by pressing the `[x]` button.
+You can also interrupt the timeout by long pressing the power button.
 
 This allows you to switch apps without relying on gestures.
 

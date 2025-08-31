@@ -41,9 +41,16 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
             return Center(Cleared(Border(Column(
                 Padding(Row(Text("Copy into Notebook")), Insets::all(spacing)),
                 Padding(Row(
-                    SpinWidget("Quality", [this](std::string value) {
+                    SpinWidget("Screenshot Quality", [this](std::string value) {
                         setState([value](auto& self) { self.quality = value; });
                     }, 2, 255, 1, 50
+                )), Insets::all(spacing)),
+                Padding(Row(
+                    SpinWidget("Notebook", [this](std::string value) {
+                        setState([value](auto& self) { self.notebook = value; });
+                    }, 0, notebooks_list.size()-1, 1, 1, [this](int val) {
+                        return notebooks_list[val];
+                    }
                 )), Insets::all(spacing)),
                 Padding(Row(
                     SpinWidget("Target Page", [this](std::string value) {
@@ -82,20 +89,20 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
                     if (line.compare(0, notebookPrefix.size(), notebookPrefix) == 0) {
                         size_t pos = line.find(':');
                         if (pos != std::string::npos && pos + 1 < line.size()) {
-                            notebook += line.substr(pos + 1, 32); // Text() doesn't support line breaks
+                            notebook += line.substr(pos + 1);
                         }
                     } else if (line.compare(0, pagePrefix.size(), pagePrefix) == 0) {
                         size_t pos = line.find(':');
                         if (pos != std::string::npos && pos + 1 < line.size()) {
-                            page += line.substr(pos + 1, 32);
+                            page += line.substr(pos + 1);
                         }
                     }
                 }
             }
             return Center(Cleared(Border(Column(
                 Padding(Row(Text("Confirm the target of this operation")), Insets::all(spacing)),
-                Padding(Row(Text(notebook)), Insets::all(spacing)),
-                Padding(Row(Text(page)), Insets::all(spacing)),
+                Padding(Row(Text(notebook,  default_text_size, 32)), Insets::all(spacing)),
+                Padding(Row(Text(page, default_text_size, 32)), Insets::all(spacing)),
                 Padding(Row(
                     Padding(Button("Cancel", [this]{
                         setState([](auto& self) { 
@@ -123,6 +130,7 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
                     // match state with ui
                     self.quality = "2";
                     self.mode = inject_modes[0];
+                    self.notebook = "";
                 });
             }, default_text_size, 5, isValidSelection()), Insets::only_left(10));
             auto closeButton = Padding(RoundButton("X", [this, &context] {
@@ -194,6 +202,7 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
         bool isInControls(rmlib::Point pos) const;
         std::string buildCopyCommand() const;
         std::string buildSimulateCommand() const;
+        std::string buildListCommand() const;
 
         rmlib::Point touchDownPoint = {0, 0};
         rmlib::Point selectionStart = {0, 0};
@@ -202,7 +211,11 @@ class ScreenshoterState : public rmlib::StateBase<ScreenshoterWidget> {
         bool isSelecting = true;
         bool isShowingConfirmation = false;
 
+        std::vector<std::string> notebooks_list;
+
         const char* default_info_path = "/tmp/karmtka_info.txt";
+        const char* default_list_path = "/tmp/karmtka_list.txt";
         std::string quality;
         std::string mode;
+        std::string notebook;
 };

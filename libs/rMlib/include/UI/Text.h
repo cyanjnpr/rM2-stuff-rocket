@@ -11,8 +11,8 @@ class TextRenderObject;
 
 class Text : public Widget<TextRenderObject> {
 public:
-  Text(std::string text, int fontSize = default_text_size)
-    : text(std::move(text)), fontSize(fontSize) {}
+  Text(std::string text, int fontSize = default_text_size, int maxLength = 1024)
+    : text(std::move(text.substr(0, maxLength))), fontSize(fontSize) {}
 
   std::unique_ptr<RenderObject> createRenderObject() const;
 

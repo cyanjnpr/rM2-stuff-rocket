@@ -157,6 +157,7 @@ void LauncherState::lock() {
 
 void LauncherState::unlock() {
   isUnlocked = true;
+  resetInactivity();
 }
 
 void LauncherState::showScreenshot() {
@@ -385,5 +386,6 @@ LauncherState::readApps() {
 
 void
 LauncherState::resetInactivity() const {
+  // sleep sooner if locked, at countdown == 1 it doesn't work as it should
   inactivityCountdown = isUnlocked ? default_inactivity_timeout : 2;
 }
